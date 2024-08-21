@@ -1,13 +1,18 @@
+import base64
 import socket
 import ssl
 import os
 
 class URL:
     def __init__(self, url):
-        self.scheme,url = url.split("://", 1)
-        assert self.scheme in ["http", "https","file"]
-        if self.scheme == ["http","https"]:
-            self.port = 80 if self.scheme =="https" else 443
+        if "://" in url:
+            self.scheme, url = url.split("://", 1)
+        else:
+            # Handle the case where there is no scheme (e.g., data URLs)
+            self.scheme = "data"
+        assert self.scheme in ["http", "https","file","data"]
+        if self.scheme in ["http","https"]:
+            self.port = 443 if self.scheme =="https" else 80
         # if ":" in self.host:
         #     self.host, port = self.host.split(":", 1)
         #     self.port = int(port)
@@ -22,7 +27,12 @@ class URL:
             if url.startswith("/"):
                 url = url[1:]
             self.path = url
-
+        elif self.scheme == "data":
+            self.mime_type, data = url.split(",", 1) #mime_type:string that specifies the nature and format of a file or data.
+            self.is_base64 = self.mime_type.endswith(";base64")
+            if self.is_base64:
+                self.mime_type = self.mime_type[:-7]  # Remove ';base64'
+            self.data = data
 
     def request(self):
         if self.scheme in ["http", "https"]:
@@ -71,6 +81,11 @@ class URL:
                 return f"File not found at the path :{self.path}"
             except Exception as e:
                 return f"exception occoured :{e}"
+        elif self.scheme == "data":
+            if self.is_base64:
+                return base64.b64decode(self.data).decode("utf8")
+            else:
+                return self.data
     def show(self,body):
         in_tag = False
         for c in body:
