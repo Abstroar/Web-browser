@@ -73,7 +73,7 @@ class URL:
             content = response.read()
             s.close()
             return content
-        elif self.scheme=="file":
+        elif self.scheme == "file":
             try:
                 with open(self.path, "r", encoding="utf8") as file :
                     return file.read()
@@ -86,15 +86,26 @@ class URL:
                 return base64.b64decode(self.data).decode("utf8")
             else:
                 return self.data
-    def show(self,body):
+    def show(self, body):
         in_tag = False
-        for c in body:
-            if c =="<":
+        i = 0
+        while i < len(body):
+            if body[i] == "<":
                 in_tag = True
-            elif c ==">":
+            elif body[i] == ">":
                 in_tag = False
             elif not in_tag:
-                print(c, end="")
+                if body[i:i+4] == "&lt;":
+                    print("<", end="")
+                    i+=3
+                elif body[i:i+4] == "&gt;":
+                    print(">", end="")
+                    i += 3
+                else:
+                    print(body[i], end="")
+            i += 1
+
+
 
     def load(self,url):
         body = url.request()
