@@ -9,3 +9,6 @@
 
 #3 for scheme data
 # python main.py "data:text/plain;base64,SGVsbG8gd29ybGQh"
+
+#
+#python main.py view-source:http://example.com

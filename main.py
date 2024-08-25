@@ -5,14 +5,22 @@ import os
 
 class URL:
     def __init__(self, url):
+        if url.startswith("view-source:"):
+            self.view = True
+            url = url[len("view-source:"):]
+        else:
+            self.view = False
         if "://" in url:
-            self.scheme, url = url.split("://", 1)
+            # if self.scheme == "view-source":
+            #     _,url = url.split("://", 1)
+            # else:
+            self.scheme, url =url.split("://", 1)
         else:
             # Handle the case where there is no scheme (e.g., data URLs)
             self.scheme = "data"
-        assert self.scheme in ["http", "https","file","data"]
+        assert self.scheme in ["http", "https","file","data", "view-source"]
         if self.scheme in ["http","https"]:
-            self.port = 443 if self.scheme =="https" else 80
+            self.port = 443 if self.scheme == "https" else 80
         # if ":" in self.host:
         #     self.host, port = self.host.split(":", 1)
         #     self.port = int(port)
@@ -35,7 +43,9 @@ class URL:
             self.data = data
 
     def request(self):
+        print("reached request")
         if self.scheme in ["http", "https"]:
+            print("reached in https")
             s = socket.socket(
                 family=socket.AF_INET,
                 type=socket.SOCK_STREAM,
@@ -59,10 +69,13 @@ class URL:
             request += "\r\n"
 
             s.send(request.encode("utf8"))
+            print(f"Request sent:\n{request}")
             response = s.makefile("r", encoding="utf8", newline="\r\n")
             statusline = response.readline()
             version, status, explanation = statusline.split(" ",2)
             response_headers = {}
+            print(f"Status line: {statusline}")
+
             while True:
                 line = response.readline()
                 if line == "\r\n":break
@@ -71,6 +84,8 @@ class URL:
             assert "transfer-encoding" not in response_headers
             assert "content-encoding" not in response_headers
             content = response.read()
+            print(f"Response headers: {response_headers}")
+
             s.close()
             return content
         elif self.scheme == "file":
@@ -80,13 +95,18 @@ class URL:
             except FileNotFoundError:
                 return f"File not found at the path :{self.path}"
             except Exception as e:
-                return f"exception occoured :{e}"
+                return f"exception occured :{e}"
         elif self.scheme == "data":
             if self.is_base64:
                 return base64.b64decode(self.data).decode("utf8")
             else:
                 return self.data
     def show(self, body):
+        print(f"Showing content for scheme: {self.scheme}")
+        if self.view == True:
+            print("Showing view-source content:")
+            print(body)
+            return
         in_tag = False
         i = 0
         while i < len(body):
@@ -105,11 +125,13 @@ class URL:
                     print(body[i], end="")
             i += 1
 
-
-
     def load(self,url):
+        # print(f"Loading URL: {url}")
         body = url.request()
-        self.show(body)
+        if body is None:
+            print("Error: No content received.")
+        else:
+            self.show(body)
 
 
 if __name__ == "__main__":
@@ -121,4 +143,3 @@ if __name__ == "__main__":
         url = sys.argv[1]
     browser = URL(url)
     browser.load(URL(url))
-
