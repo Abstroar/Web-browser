@@ -5,6 +5,7 @@ import os
 
 class URL:
     def __init__(self, url):
+        self.socket = None
         if url.startswith("view-source:"):
             self.view = True
             url = url[len("view-source:"):]
@@ -41,26 +42,29 @@ class URL:
             if self.is_base64:
                 self.mime_type = self.mime_type[:-7]  # Remove ';base64'
             self.data = data
-
-    def request(self):
-        print("reached request")
-        if self.scheme in ["http", "https"]:
-            print("reached in https")
+    def create_socket(self):
+        if self.socket is None:
             s = socket.socket(
                 family=socket.AF_INET,
                 type=socket.SOCK_STREAM,
                 proto=socket.IPPROTO_TCP
             )
             s.connect((self.host, self.port))
-
             if self.scheme == "https":
                 ctx = ssl.create_default_context()
                 s = ctx.wrap_socket(s, server_hostname=self.host)
+            self.socket = s
+
+        return self.socket
+    def request(self):
+        print("reached request")
+        if self.scheme in ["http", "https"]:
+            s = self.create_socket()
+            print("reached in https")
 
             header = {
                 "Host": self.host,
-                "Connection":"close",
-                "User-Agent":"Abstro_browser/1.0",
+                "User-Agent": "Abstro_browser/1.0",
             }
 
             request = "GET {} HTTP/1.0\r\n".format(self.path)
@@ -83,10 +87,10 @@ class URL:
                 response_headers[header.casefold()] = value.strip()
             assert "transfer-encoding" not in response_headers
             assert "content-encoding" not in response_headers
-            content = response.read()
+            content = response.read(int(response_headers['content-length']))
             print(f"Response headers: {response_headers}")
-
-            s.close()
+            print(content)
+            # s.close()
             return content
         elif self.scheme == "file":
             try:
@@ -95,7 +99,7 @@ class URL:
             except FileNotFoundError:
                 return f"File not found at the path :{self.path}"
             except Exception as e:
-                return f"exception occured :{e}"
+                return f"exception occurred :{e}"
         elif self.scheme == "data":
             if self.is_base64:
                 return base64.b64decode(self.data).decode("utf8")

@@ -1,7 +1,7 @@
 #1
 #PS D:\New python\Web Browser> python main.py http://example.org/
 
-#2 for scheme file
+#2 in build command to read a http scheme in the port
 # PS D:\New python\Web Browser> python -m http.server 8000 -d "D:\New python\Web Browser\example"
 # Serving HTTP on :: port 8000 (http://[::]:8000/) ...
 # ::1 - - [21/Aug/2024 22:01:51] "GET / HTTP/1.1" 200 -
