@@ -12,3 +12,6 @@
 
 #
 #python main.py view-source:http://example.com
+
+#to redirect
+#python main.py http://browser.engineering/redirect

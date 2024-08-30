@@ -5,6 +5,7 @@ import os
 
 class URL:
     def __init__(self, url):
+        self.redirect = 0
         self.socket = None
         if url.startswith("view-source:"):
             self.view = True
@@ -15,7 +16,7 @@ class URL:
             # if self.scheme == "view-source":
             #     _,url = url.split("://", 1)
             # else:
-            self.scheme, url =url.split("://", 1)
+            self.scheme, url = url.split("://", 1)
         else:
             # Handle the case where there is no scheme (e.g., data URLs)
             self.scheme = "data"
@@ -77,8 +78,11 @@ class URL:
             response = s.makefile("r", encoding="utf8", newline="\r\n")
             statusline = response.readline()
             version, status, explanation = statusline.split(" ",2)
+            status = int(status)
             response_headers = {}
             print(f"Status line: {statusline}")
+            print(f"status : {status}")
+
 
             while True:
                 line = response.readline()
@@ -87,6 +91,19 @@ class URL:
                 response_headers[header.casefold()] = value.strip()
             assert "transfer-encoding" not in response_headers
             assert "content-encoding" not in response_headers
+
+            if status < 400 and status > 300:
+                if self.redirect > 2:
+                    return f"error"
+                self.redirect += 1
+                if "://" in response_headers["location"]:
+                    new_url = response_headers["location"]
+                else:
+                    new_url = (f"{url}{response_headers['location']}")
+                print(f"{new_url} redirected to ")
+                url_obj = URL(new_url)
+                return url_obj.request()
+
             content = response.read(int(response_headers['content-length']))
             print(f"Response headers: {response_headers}")
             print(content)
