@@ -2,10 +2,13 @@ import base64
 import socket
 import ssl
 import os
+import time
+
 
 class URL:
     def __init__(self, url):
         self.redirect = 0
+        self.cache = {}
         self.socket = None
         if url.startswith("view-source:"):
             self.view = True
@@ -43,6 +46,7 @@ class URL:
             if self.is_base64:
                 self.mime_type = self.mime_type[:-7]  # Remove ';base64'
             self.data = data
+
     def create_socket(self):
         if self.socket is None:
             s = socket.socket(
@@ -55,9 +59,23 @@ class URL:
                 ctx = ssl.create_default_context()
                 s = ctx.wrap_socket(s, server_hostname=self.host)
             self.socket = s
-
         return self.socket
+
     def request(self):
+        print(f"path {url}")
+        if self.path in self.cache:
+            cache_entry = self.cache[self.path]
+            cache_headers = cache_entry['headers']
+
+            max_age = int(cache_headers['cache-control'].split('=')[1])
+            age = time.time() - cache_entry['timestamp']
+
+            if age < max_age:
+                print("Serving from cache")
+                return cache_entry['content']
+            else:
+                print("Cache expired, fetching new content")
+
         print("reached request")
         if self.scheme in ["http", "https"]:
             s = self.create_socket()
@@ -65,8 +83,7 @@ class URL:
 
             header = {
                 "Host": self.host,
-                "User-Agent": "Abstro_browser/1.0",
-            }
+                "User-Agent": "Abstro_browser/1.0",}
 
             request = "GET {} HTTP/1.0\r\n".format(self.path)
             for i,j in header.items():
@@ -105,9 +122,13 @@ class URL:
                 return url_obj.request()
 
             content = response.read(int(response_headers['content-length']))
-            print(f"Response headers: {response_headers}")
-            print(content)
-            # s.close()
+            if status == 200 and "cache-control" in response_headers:
+                self.cache[self.path] = {
+                    'content': content,
+                    'headers': response_headers,
+                    'timestamp': time.time()
+                }
+            #print(f"Content cached with max-age {max_age} seconds")
             return content
         elif self.scheme == "file":
             try:
