@@ -3,7 +3,7 @@ import gzip
 import io
 import socket
 import ssl
-import os
+import os   
 import time
 
 
@@ -64,7 +64,7 @@ class URL:
         return self.socket
 
     def request(self):
-        print(f"path {url}")
+        print(f"path {self.path}")
         if self.path in self.cache:
             cache_entry = self.cache[self.path]
             cache_headers = cache_entry['headers']
@@ -177,10 +177,35 @@ class URL:
                 else:
                     print(body[i], end="")
             i += 1
+    def lex(self, body):
+        text = ""
+        if self.view == True:
+            print("Showing view-source content:")
+            print(body)
+            return body
+        in_tag = False
+        i = 0
+        while i < len(body):
+            if body[i] == "<":
+                in_tag = True
+            elif body[i] == ">":
+                in_tag = False
+            elif not in_tag:
+                if body[i:i+4] == "&lt;":
+                    text += "<"
+                    i+=3
+                elif body[i:i+4] == "&gt;":
+                    text += ">"
+                    i += 3
+                else:
+                    text += body[i]
+            i += 1
+        return text
 
     def load(self,url):
         # print(f"Loading URL: {url}")
         body = url.request()
+        # text = self.lex(body)
         if body is None:
             print("Error: No content received.")
         else:
