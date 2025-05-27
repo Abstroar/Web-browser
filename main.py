@@ -191,15 +191,9 @@ class URL:
             elif body[i] == ">":
                 in_tag = False
             elif not in_tag:
-                if body[i:i+4] == "&lt;":
-                    text += "<"
-                    i+=3
-                elif body[i:i+4] == "&gt;":
-                    text += ">"
-                    i += 3
-                else:
-                    text += body[i]
+                text += body[i]
             i += 1
+        print(text)
         return text
 
     def load(self,url):

@@ -17,6 +17,7 @@ class Browser:
         self.display_list = ""
         self.window.bind("<Down>", self.scrolldown)
         self.window.bind("<Up>", self.scrollup)
+        self.window.bind_all("<MouseWheel>", self.on_mousewheel) ##binds the event globally
 
     def draw(self):
         self.canvas.delete("all")
@@ -27,22 +28,26 @@ class Browser:
 
     def load(self,  url_obj):
         body = url_obj.request()
+        body = body.replace("</p>", "\n")
+
         text = url_obj.lex(body)
         self.display_list = layout(text)
         self.draw()
 
 
     def scrollup(self, e):
-        self.scroll -= SCROLL_STEP
-        self.draw()
+        if self.scroll > 0:
+            self.scroll -= SCROLL_STEP
+            self.draw()
     def scrolldown(self, e):
         self.scroll += SCROLL_STEP
         self.draw()
 
-
-
-
-
+    def on_mousewheel(self, event):
+        if event.delta > 0:
+            self.scrollup(event)
+        elif event.delta < 0:
+            self.scrolldown(event)
 
 
 def layout(text):

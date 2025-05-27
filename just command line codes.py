@@ -10,8 +10,36 @@
 #3 for scheme data
 # python main.py "data:text/plain;base64,SGVsbG8gd29ybGQh"
 
-#
+#python gui.py https://browser.engineering/examples/xiyouji.html
 #python main.py view-source:http://example.com
 
 #to redirect
 #python main.py http://browser.engineering/redirect
+
+
+#### 2.1
+# def lex(self, body):
+#     text = ""
+#     if self.view == True:
+#         print("Showing view-source content:")
+#         print(body)
+#         return body
+#     in_tag = False
+#     i = 0
+#     while i < len(body):
+#         if body[i] == "<":
+#             if body[i:i + 4].lower() == "<br":
+#                 text += "\n"
+#                 i += 4
+#             elif body[i:i + 2].lower() == "</p":
+#                 text += "\n"
+#                 i += 3
+#             else:
+#                 in_tag = True
+#         elif body[i] == ">":
+#             in_tag = False
+#         elif not in_tag:
+#             text += body[i]
+#         i += 1
+#     print(text)
+#     return text
