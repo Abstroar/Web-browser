@@ -9,11 +9,16 @@ from io import text_encoding
 
 
 class Text:
-    def __init__(self, text):
+    def __init__(self, text, parent):
         self.text = text
+        self.children = []
+        self.parent = parent
 class Tag:
-    def __init__(self, tag):
+    def __init__(self, tag, parent):
         self.tag = tag
+        self.children = []
+        self.parent = parent
+
 
 class URL:
     def __init__(self, url):
