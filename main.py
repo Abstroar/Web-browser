@@ -5,7 +5,15 @@ import socket
 import ssl
 import os   
 import time
+from io import text_encoding
 
+
+class Text:
+    def __init__(self, text):
+        self.text = text
+class Tag:
+    def __init__(self, tag):
+        self.tag = tag
 
 class URL:
     def __init__(self, url):
@@ -65,95 +73,101 @@ class URL:
 
     def request(self):
         print(f"path {self.path}")
-        if self.path in self.cache:
-            cache_entry = self.cache[self.path]
-            cache_headers = cache_entry['headers']
+        if self.path == "about:blank":
+            return ""
+        try :
+            if self.path in self.cache:
+                cache_entry = self.cache[self.path]
+                cache_headers = cache_entry['headers']
 
-            max_age = int(cache_headers['cache-control'].split('=')[1])
-            age = time.time() - cache_entry['timestamp']
+                max_age = int(cache_headers['cache-control'].split('=')[1])
+                age = time.time() - cache_entry['timestamp']
 
-            if age < max_age:
-                print("Serving from cache")
-                return cache_entry['content']
-            else:
-                print("Cache expired, fetching new content")
-
-        print("reached request")
-        if self.scheme in ["http", "https"]:
-            s = self.create_socket()
-            print("reached in https")
-
-            header = {
-                "Host": self.host,
-                "User-Agent": "Abstro_browser/1.0",
-                "Accept-Encoding": "gzip",
-            }
-
-            request = "GET {} HTTP/1.0\r\n".format(self.path)
-            for i,j in header.items():
-                request += f"{i}: {j}\r\n"
-            request += "\r\n"
-
-            s.send(request.encode("utf8"))
-            print(f"Request sent:\n{request}")
-            response = s.makefile("rb", newline="\r\n")
-            statusline = response.readline().decode("utf8")
-            version, status, explanation = statusline.split(" ",2)
-            status = int(status)
-            response_headers = {}
-            print(f"Status line: {statusline}")
-            print(f"status : {status}")
-
-
-            while True:
-                line = response.readline().decode("utf8")
-                if line == "\r\n":break
-                header, value = line.split(":",1)
-                response_headers[header.casefold()] = value.strip()
-            assert "transfer-encoding" not in response_headers
-            # assert "content-encoding" not in response_headers
-
-            if status < 400 and status > 300:
-                if self.redirect > 2:
-                    return f"error"
-                self.redirect += 1
-                if "://" in response_headers["location"]:
-                    new_url = response_headers["location"]
+                if age < max_age:
+                    print("Serving from cache")
+                    return cache_entry['content']
                 else:
-                    new_url = (f"{url}{response_headers['location']}")
-                print(f"{new_url} redirected to ")
-                url_obj = URL(new_url)
-                return url_obj.request()
+                    print("Cache expired, fetching new content")
 
-            if response_headers.get("content-encoding") == "gzip":
-                print("hey its gzip on the board")
-                compressed_data = response.read(int(response_headers['content-length']))
-                with gzip.GzipFile(fileobj=io.BytesIO(compressed_data)) as gz:
-                    content = gz.read()
-            else:
-                content = response.read(int(response_headers['content-length']))
-            content = content.decode("utf8")
-            if status == 200 and "cache-control" in response_headers:
-                self.cache[self.path] = {
-                    'content': content,
-                    'headers': response_headers,
-                    'timestamp': time.time()
+            if self.scheme in ["http", "https"]:
+                s = self.create_socket()
+                print("reached in https")
+
+                header = {
+                    "Host": self.host,
+                    "User-Agent": "Abstro_browser/1.0",
+                    "Accept-Encoding": "gzip",
                 }
-            #print(f"Content cached with max-age {max_age} seconds")
-            return content
-        elif self.scheme == "file":
-            try:
-                with open(self.path, "r", encoding="utf8") as file :
-                    return file.read()
-            except FileNotFoundError:
-                return f"File not found at the path :{self.path}"
-            except Exception as e:
-                return f"exception occurred :{e}"
-        elif self.scheme == "data":
-            if self.is_base64:
-                return base64.b64decode(self.data).decode("utf8")
-            else:
-                return self.data
+
+                request = "GET {} HTTP/1.0\r\n".format(self.path)
+                for i,j in header.items():
+                    request += f"{i}: {j}\r\n"
+                request += "\r\n"
+
+                s.send(request.encode("utf8"))
+                print(f"Request sent:\n{request}")
+                response = s.makefile("rb", newline="\r\n")
+                statusline = response.readline().decode("utf8")
+                version, status, explanation = statusline.split(" ",2)
+                status = int(status)
+                response_headers = {}
+                print(f"Status line: {statusline}")
+                print(f"status : {status}")
+
+
+                while True:
+                    line = response.readline().decode("utf8")
+                    if line == "\r\n":break
+                    header, value = line.split(":",1)
+                    response_headers[header.casefold()] = value.strip()
+                assert "transfer-encoding" not in response_headers
+                # assert "content-encoding" not in response_headers
+
+                if status < 400 and status > 300:
+                    if self.redirect > 2:
+                        return f"error"
+                    self.redirect += 1
+                    if "://" in response_headers["location"]:
+                        new_url = response_headers["location"]
+                    else:
+                        new_url = (f"{url}{response_headers['location']}")
+                    print(f"{new_url} redirected to ")
+                    url_obj = URL(new_url)
+                    return url_obj.request()
+
+                if response_headers.get("content-encoding") == "gzip":
+                    print("hey its gzip on the board")
+                    compressed_data = response.read(int(response_headers['content-length']))
+                    with gzip.GzipFile(fileobj=io.BytesIO(compressed_data)) as gz:
+                        content = gz.read()
+                else:
+                    content = response.read(int(response_headers['content-length']))
+                content = content.decode("utf8")
+                if status == 200 and "cache-control" in response_headers:
+                    self.cache[self.path] = {
+                        'content': content,
+                        'headers': response_headers,
+                        'timestamp': time.time()
+                    }
+                #print(f"Content cached with max-age {max_age} seconds")
+                return content
+            elif self.scheme == "file":
+                try:
+                    with open(self.path, "r", encoding="utf8") as file :
+                        return file.read()
+                except FileNotFoundError:
+                    return f"File not found at the path :{self.path}"
+                except Exception as e:
+                    return f"exception occurred :{e}"
+            elif self.scheme == "data":
+                if self.is_base64:
+                    return base64.b64decode(self.data).decode("utf8")
+                else:
+                    return self.data
+        except Exception as e:
+            print("askksa",e)
+            return ""
+
     def show(self, body):
         print(f"Showing content for scheme: {self.scheme}")
         if self.view == True:
@@ -177,24 +191,6 @@ class URL:
                 else:
                     print(body[i], end="")
             i += 1
-    def lex(self, body):
-        text = ""
-        if self.view == True:
-            print("Showing view-source content:")
-            print(body)
-            return body
-        in_tag = False
-        i = 0
-        while i < len(body):
-            if body[i] == "<":
-                in_tag = True
-            elif body[i] == ">":
-                in_tag = False
-            elif not in_tag:
-                text += body[i]
-            i += 1
-        print(text)
-        return text
 
     def load(self,url):
         # print(f"Loading URL: {url}")
@@ -205,6 +201,25 @@ class URL:
         else:
             self.show(body)
 
+
+def lex(body):
+    out = []
+    buffer = ""
+    in_tag = False
+    for c in body:
+        if c == "<":
+            in_tag = True
+            if buffer: out.append(Text(buffer))
+            buffer = ""
+        elif c == ">":
+            in_tag = False
+            out.append(Tag(buffer))
+            buffer = ""
+        else:
+            buffer += c
+    if not in_tag and buffer:
+        out.append(Text(buffer))
+    return out
 
 if __name__ == "__main__":
     import sys

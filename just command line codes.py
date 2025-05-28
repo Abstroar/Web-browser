@@ -43,3 +43,34 @@
 #         i += 1
 #     print(text)
 #     return text
+
+#
+# def re_layout(self, tokens):
+#     display_list = []
+#     cursor_x, cursor_y = HSTEP, VSTEP
+#     weight = "normal"
+#     style = "roman"
+#     for tok in tokens:
+#         if isinstance(tok, Text):
+#             for word in tok.text.split():
+#                 font = tkinter.font.Font(size=16, weight=weight, slant=style)
+#                 display_list.append((cursor_x, cursor_y, word, font))
+#                 cursor_x += HSTEP * len(word) + HSTEP
+#                 if cursor_x >= self.width - HSTEP - 100:
+#                     cursor_y += VSTEP
+#                     cursor_x = HSTEP
+#
+#         elif isinstance(tok, Tag):
+#             if tok.tag == "br" or tok.tag == "p":
+#                 cursor_y += VSTEP * 2
+#                 cursor_x = HSTEP
+#             elif tok.tag == "b":
+#                 weight = "bold"
+#             elif tok.tag == "/b":
+#                 weight = "normal"
+#             elif tok.tag == "i":
+#                 style = "italic"
+#             elif tok.tag == "/i":
+#                 style = "roman"
+#
+#     return display_list
