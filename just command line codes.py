@@ -60,7 +60,7 @@
 #                     cursor_y += VSTEP
 #                     cursor_x = HSTEP
 #
-#         elif isinstance(tok, Tag):
+#         elif isinstance(tok, Element):
 #             if tok.tag == "br" or tok.tag == "p":
 #                 cursor_y += VSTEP * 2
 #                 cursor_x = HSTEP
