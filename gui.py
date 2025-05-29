@@ -56,8 +56,8 @@ class Browser:
 
     def load(self, url_obj):
         body = url_obj.request()
-        self.tokens = lex(body)
-        self.display_list = Layout(self.tokens, self.width).display_list
+        self.nodes = HTMLparser(body).parse()
+        self.display_list = Layout([self.nodes], self.width).display_list
         self.draw()
 
     def scrollup(self, e):
@@ -96,7 +96,7 @@ class Browser:
         height = event.height - 10
         self.width = width
         self.height = height
-        self.display_list = Layout(self.tokens, self.width).display_list
+        self.display_list = Layout([self.nodes], self.width).display_list
         self.draw()
 
 class Layout:
@@ -113,50 +113,55 @@ class Layout:
         self.style = "roman"
         self.size = 12
         for tok in tokens:
-            self.token(tok)
+            self.recurse(tok)
         self.flush()
 
+    def open_tag(self, tag):
+        if tag == "b":
+            self.weight = "bold"
+        elif tag == "i":
+            self.style = "italic"
+        elif tag == "small":
+            self.size -= 2
+        elif tag == "big":
+            self.size += 4
+        elif tag == "br":
+            self.flush()
+        elif tag == "h1":
+            self.flush()
+            self.center = True
+        elif tag == "sup":
+            self.size = self.size // 2
+            self.superscripts = True
 
-    def token(self, tok):
-        if isinstance(tok, Text):
-            for word in tok.text.split():
+    def close_tag(self, tag):
+        if tag == "/b":
+            self.weight = "normal"
+        elif tag == "/i":
+            self.style = "roman"
+        elif tag == "/small":
+            self.size += 2
+        elif tag == "/big":
+            self.size -= 4
+        elif tag == "/p":
+            self.flush()
+            self.cursor_y += VSTEP
+        elif tag == "/h1":
+            self.flush()
+            self.center = False
+        elif tag == "/sup":
+            self.size = self.size * 2
+            self.superscripts = False
+
+    def recurse(self, tree):
+        if isinstance(tree, Text):
+            for word in tree.text.split():
                 self.word(word)
-        elif isinstance(tok, Element):
-            if tok.tag == "b":
-                self.weight = "bold"
-            elif tok.tag == "/b":
-                self.weight = "normal"
-            elif tok.tag == "i":
-                self.style = "italic"
-            elif tok.tag == "/i":
-                self.style = "roman"
-            elif tok.tag == "small":
-                self.size -= 2
-            elif tok.tag == "/small":
-                self.size += 2
-            elif tok.tag == "big":
-                self.size += 4
-            elif tok.tag == "/big":
-                self.size -= 4
-            elif tok.tag == "br":
-                self.flush()
-            elif tok.tag == "/p":
-                self.flush()
-                self.cursor_y += VSTEP
-            elif tok.tag == "h1":
-                self.flush()
-                self.center = True
-            elif tok.tag == "/h1":
-                self.flush()
-                self.center = False
-            elif tok.tag == "sup":
-                self.size = self.size//2
-                self.superscripts = True
-            elif tok.tag == "/sup":
-                self.size = self.size * 2
-                self.superscripts = False
-
-
+        else:
+            self.open_tag(tree.tag)
+            for child in tree.children:
+                self.recurse(child)
+            self.close_tag(tree.tag)
 
     def word(self, word):
         font = get_font(self.size, self.weight, self.style)

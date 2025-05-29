@@ -69,8 +69,69 @@
 #             elif tok.tag == "/b":
 #                 weight = "normal"
 #             elif tok.tag == "i":
-#                 style = "italic"
-#             elif tok.tag == "/i":
-#                 style = "roman"
+# #                 style = "italic"
+# #             elif tok.tag == "/i":
+# #                 style = "roman"
+# #
+# #     return display_list
 #
-#     return display_list
+#
+# def token(self, tok):
+#     if isinstance(tok, Text):
+#         for word in tok.text.split():
+#             self.word(word)
+#     elif isinstance(tok, Element):
+#         if tok.tag == "b":
+#             self.weight = "bold"
+#         elif tok.tag == "/b":
+#             self.weight = "normal"
+#         elif tok.tag == "i":
+#             self.style = "italic"
+#         elif tok.tag == "/i":
+#             self.style = "roman"
+#         elif tok.tag == "small":
+#             self.size -= 2
+#         elif tok.tag == "/small":
+#             self.size += 2
+#         elif tok.tag == "big":
+#             self.size += 4
+#         elif tok.tag == "/big":
+#             self.size -= 4
+#         elif tok.tag == "br":
+#             self.flush()
+#         elif tok.tag == "/p":
+#             self.flush()
+#             self.cursor_y += VSTEP
+#         elif tok.tag == "h1":
+#             self.flush()
+#             self.center = True
+#         elif tok.tag == "/h1":
+#             self.flush()
+#             self.center = False
+#         elif tok.tag == "sup":
+#             self.size = self.size // 2
+#             self.superscripts = True
+#         elif tok.tag == "/sup":
+#             self.size = self.size * 2
+#             self.superscripts = False
+
+
+#
+# def lex(body):
+#     out = []
+#     buffer = ""
+#     in_tag = False
+#     for c in body:
+#         if c == "<":
+#             in_tag = True
+#             if buffer: out.append(Text(buffer))
+#             buffer = ""
+#         elif c == ">":
+#             in_tag = False
+#             out.append(Element(buffer))
+#             buffer = ""
+#         else:
+#             buffer += c
+#     if not in_tag and buffer:
+#         out.append(Text(buffer))
+#     return out
